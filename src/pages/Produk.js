@@ -421,7 +421,7 @@ const DisplayProduk = ({products, loading, handleSubmit, handleEditSubmit, handl
       <div className="container">
         <h1>Produk</h1>
         <br />
-				<Button onClick={getALlProduct} variant="success" >
+				<Button onClick={getALlProduct} style={{float: 'right'}} variant="success" >
 					Ambil Semua Produk
 				</Button>
         <Button variant="primary" onClick={handleShow}>
