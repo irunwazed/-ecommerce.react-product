@@ -9,7 +9,7 @@ const AlertDismissibleExample = ({notif, judul, isi, status}) => {
   const [show, setShow] = useState(notif);
   if (show) {
     return (
-      <Alert variant="danger" onClose={() => setShow(false)} dismissible>
+      <Alert variant={status} onClose={() => setShow(false)} dismissible>
         <Alert.Heading>{judul}</Alert.Heading>
         <p>{isi}</p>
       </Alert>
@@ -34,18 +34,28 @@ const formatRupiah = (angka) => {
   return rupiah;
 }
 
+const baseUrl = 'http://127.0.0.1:8000/';
+
 class Produk extends React.Component {
 
   constructor(){
     super();
-    // const [products, setProducts] = useState([]);
     this.state = {
       products: [],
       page: 1,
-      loading: false
+      loading: false,
+      alert:{
+        status: 'danger',
+        notif: false,
+        judul: '',
+        isi: '',
+      }
     }
     this.temp = 0;
+    this.handleDelete = this.handleDelete.bind(this);
+    
   }
+
 
   componentDidMount() {
     this.getProduct();
@@ -56,7 +66,7 @@ class Produk extends React.Component {
     Object.keys(_data).forEach(e => {
       data.append(e, _data[e]);
     })
-    axios.post('http://127.0.0.1:8000/api/product', data).then(res => {
+    axios.post(baseUrl+'api/product', data).then(res => {
       console.log(res);
     }).catch(err => {
       console.log(err.message);
@@ -64,10 +74,30 @@ class Produk extends React.Component {
     
   }
 
+  handleDelete = (prdNo) => {
+    var result = window.confirm("Want to delete?");
+    if (result) {
+      axios.get(baseUrl+'elevenia/hidden-product/'+prdNo).then(res => {
+        let alert = {
+          status: 'danger',
+          notif: true,
+          judul: res.data.message,
+          isi: '',
+        }
+        // console.log(alert)
+        this.setState({
+          alert: alert
+        })
+      }).catch(err => {
+        console.log(err.message);
+      })
+    }
+  }
+
   getProduct = () => {
     console.log(this.state.page);
     this.setState({loading: true});
-    axios.get('http://127.0.0.1:8000/api/product?page='+this.state.page).then(res => {
+    axios.get(baseUrl+'api/product?page='+this.state.page).then(res => {
       console.log(res.data.data);
       let data = res.data.data;
       let masuk = true;
@@ -90,12 +120,12 @@ class Produk extends React.Component {
       }
     }
     return(
-      <DisplayProduk products={this.state.products} loading={this.state.loading} handleSubmit={this.handleSubmit} />
+      <DisplayProduk products={this.state.products} loading={this.state.loading} handleSubmit={this.handleSubmit} handleDelete={this.handleDelete} alert={this.state.alert}  />
     );
   }
 }
 
-const DisplayProduk = ({products, loading, handleSubmit}) => {
+const DisplayProduk = ({products, loading, handleSubmit, handleDelete, alert}) => {
   const [show, setShow] = useState(false);
   const [form, setForm] = useState({});
   const handleClose = () => setShow(false);
@@ -109,7 +139,6 @@ const DisplayProduk = ({products, loading, handleSubmit}) => {
       setForm(values => ({...values, [name]: value}))
     }
   }
-
   return (
     <div>
       <div className="container">
@@ -117,8 +146,8 @@ const DisplayProduk = ({products, loading, handleSubmit}) => {
         <br />
         <Button variant="primary" onClick={handleShow}>
           <FaPlusCircle />
-        </Button> Tambah
-        <AlertDismissibleExample notif={false} judul="judul" isi="isi" status="status" />
+        </Button> Tambah {alert.judul}
+        <AlertDismissibleExample notif={alert.notif} judul={alert.judul} isi={alert.isi} status={alert.status} />
         <div className="products">
           <div className="row">
             {products.map((e) => {
@@ -134,8 +163,8 @@ const DisplayProduk = ({products, loading, handleSubmit}) => {
                         {e.description.length>30?e.description.substring(0,30)+'..':e.description}
                       </Card.Text>
                       <div style={{position: 'absolute', top: 0, right: 0}}>
-                        <Button variant="primary"  onClick={handleShow}><FaTrashAlt /></Button>
-                        <Button variant="danger"  onClick={handleShow}><FaPencilAlt /></Button>
+                        <Button variant="primary"  onClick={handleShow}><FaPencilAlt /></Button>
+                        <Button variant="danger" data-no={e.no} onClick={handleDelete.bind(null, e.no)}><FaTrashAlt /></Button>
                       </div>
                     </Card.Body>
                   </Card>
